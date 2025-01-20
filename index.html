@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Molecular Visualizer</title>
+    <script src="https://unpkg.com/ngl"></script>
+</head>
+<body>
+    <h1>Molecular Visualizer</h1>
+    <p>Enter a molecular formula or SMILES string:</p>
+    <input type="text" id="smilesInput" placeholder="Enter SMILES (e.g., CCO)">
+    <button onclick="visualizeMolecule()">Visualize Molecule</button>
+    <div id="viewport" style="width: 600px; height: 400px; margin-top: 20px;"></div>
+
+    <h2>Predicted Properties</h2>
+    <div id="properties"></div>
+
+    <script>
+        async function visualizeMolecule() {
+            const smiles = document.getElementById('smilesInput').value;
+            const stage = new NGL.Stage("viewport");
+
+            // Load molecule in 3D
+            stage.loadFile(`https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/smiles/${smiles}/SDF?record_type=3d`, {
+                defaultRepresentation: true
+            });
+
+            // Fetch predicted properties from the backend
+            const response = await fetch('http://127.0.0.1:5000/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ smiles }),
+            });
+
+            const data = await response.json();
+            document.getElementById('properties').innerHTML = `
+                <p><strong>Hybridization:</strong> ${data.hybridization.join(', ')}</p>
+                <p><strong>Predicted Property:</strong> ${data.predicted_property}</p>
+            `;
+        }
+    </script>
+</body>
+</html>
